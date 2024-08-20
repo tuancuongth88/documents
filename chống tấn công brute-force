@@ -1,0 +1,46 @@
+Nếu bạn đang sử dụng Amazon Linux 2 và cài đặt bằng yum, bạn có thể làm theo các bước sau để cài đặt Fail2Ban:
+
+Bước 1: Cập nhật gói
+Mở terminal và cập nhật danh sách gói:
+
+
+sudo yum update -y
+Bước 2: Cài đặt Fail2Ban
+Chạy lệnh sau để cài đặt Fail2Ban:
+
+sudo yum install epel-release -y
+sudo yum install fail2ban -y
+Bước 3: Cấu hình Fail2Ban
+Sao chép tệp cấu hình mặc định:
+
+sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+Mở tệp jail.local để chỉnh sửa:
+
+
+sudo nano /etc/fail2ban/jail.local
+Bước 4: Cấu hình Jail
+Tìm phần [sshd] và chỉnh sửa như sau:
+
+[sshd]
+enabled = true
+port    = ssh
+filter  = sshd
+logpath = /var/log/secure
+maxretry = 5
+bantime = 600
+Bước 5: Khởi động Fail2Ban
+Khởi động và kích hoạt Fail2Ban:
+
+
+sudo systemctl start fail2ban
+sudo systemctl enable fail2ban
+Bước 6: Kiểm tra trạng thái
+Bạn có thể kiểm tra trạng thái của Fail2Ban bằng lệnh sau:
+
+sudo systemctl status fail2ban
+Bước 7: Xem các jail đang hoạt động
+Để xem các jail đang hoạt động, chạy:
+
+sudo fail2ban-client status
+Kết luận
+Bây giờ Fail2Ban đã được cài đặt và cấu hình trên Amazon Linux 2, giúp bảo vệ máy chủ của bạn khỏi các cuộc tấn công brute-force!
