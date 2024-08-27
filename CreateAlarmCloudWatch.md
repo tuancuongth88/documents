@@ -44,7 +44,7 @@
 	sudo systemctl start collectd
  - **Enable service collectd**
    	```bash
-    	sudo systemctl enable collectd.service
+    sudo systemctl enable collectd.service
 - **Khởi động CloudWatch Agent với cấu hình từ SSM(chú ý đoạn này cần sửa lại tên Parameter Store)**:
 	```bash
 	sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c ssm:AmazonCloudWatch-yamapan
