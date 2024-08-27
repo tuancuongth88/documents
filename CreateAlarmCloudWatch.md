@@ -19,12 +19,12 @@
 	```bash
 	sudo systemctl enable amazon-ssm-agent
 ## 3. Cấu hình CloudWatch Agent
-- **Chạy trình hướng dẫn cấu hình**:
-	```bash
-	sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-config-wizard
 - **Cài đặt gói Amazon CloudWatch Agent**:
 	```bash
 	sudo yum localinstall amazon-cloudwatch-agent.rpm
+- **Chạy trình hướng dẫn cấu hình**:
+	```bash
+	sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-config-wizard
 - **Khởi động CloudWatch Agent**:
 	```bash
 	sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a start
