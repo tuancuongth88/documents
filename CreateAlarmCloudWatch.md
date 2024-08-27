@@ -42,6 +42,9 @@
 - **Khởi động Collectd**:
 	```bash
 	sudo systemctl start collectd
+ - **Enable service collectd**
+   	```bash
+    	sudo systemctl enable collectd.service
 - **Khởi động CloudWatch Agent với cấu hình từ SSM**:
 	```bash
 	sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c ssm:AmazonCloudWatch-yamapan
