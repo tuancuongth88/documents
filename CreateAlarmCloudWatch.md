@@ -51,7 +51,10 @@
 - **Kiểm tra trạng thái CloudWatch Agent**:
 	```bash
 	systemctl status amazon-cloudwatch-agent
-## 5. Cấu hình các Alarm trong CloudWatch theo các tiêu chí sau:
+## 5. Chạy run command AmazonCloudWatch-ManageAgent
+- ** vào systems manager chọn menu Run command sau đấy click vào button Run command và tìm text "AmazonCloudWatch-ManageAgent" sau đó check vào rồi xuống ô input "Optional Configuration Location
+" viết tên parameter store đã tạo trước đấy (vd: AmazonCloudWatch-yamapan). chỗ Target selection chọn vào ô Choose instances manually. sau đấy xuống phần Instances chon server mà  mình đang cấu hình để rồi cuối cùng click vào phần Run.
+## 6. Cấu hình các Alarm trong CloudWatch theo các tiêu chí sau:
 -   **CPUCreditBalance**: < 288 cho 1 điểm dữ liệu trong vòng 5 phút.
 -   **mem_used_percent**: > 80% cho 5 điểm dữ liệu trong vòng 5 phút.
 -   **disk_used_percent**: > 80% cho 5 điểm dữ liệu trong vòng 5 phút.
