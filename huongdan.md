@@ -64,6 +64,16 @@ Tạo file `src/components/CandleChart.vue`:
 ```vue
 <template>
   <div class="p-4 bg-gray-900 text-white">
+    <!-- Thanh chọn coin -->
+    <div class="p-2 bg-gray-800 text-white flex items-center space-x-2 mb-3">
+      <label>Chọn Coin:</label>
+      <select v-model="selectedCoin" @change="renderChart" class="bg-gray-900 p-1 rounded">
+        <option value="BTCUSDT">BTC/USDT</option>
+        <option value="ETHUSDT">ETH/USDT</option>
+        <option value="BNBUSDT">BNB/USDT</option>
+      </select>
+    </div>
+
     <!-- Thanh chọn khung thời gian -->
     <div class="flex gap-2 mb-3">
       <button
@@ -89,9 +99,11 @@ import { onMounted, ref } from "vue"
 const chartRef = ref(null)
 let chart = null
 
+const selectedCoin = ref("BTCUSDT")   // mặc định BTC
+const interval = ref("1d")            // mặc định 1d
+
 // Các khung thời gian
 const timeframes = ["15m", "1h", "4h", "1d", "1w"]
-const interval = ref("1d")
 
 // Hàm format thời gian theo interval
 function formatTime(ts, interval) {
@@ -111,9 +123,9 @@ function formatTime(ts, interval) {
   }
 }
 
-// Fetch dữ liệu từ Binance
-async function fetchData(interval) {
-  const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=200`
+// Fetch dữ liệu từ Binance (theo coin + interval)
+async function fetchData(interval, symbol) {
+  const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=200`
   const res = await fetch(url)
   const raw = await res.json()
 
@@ -129,66 +141,65 @@ async function fetchData(interval) {
   return { dates, values, volumes }
 }
 
+// Tính MA
 function calculateMA(dayCount, data) {
-  let result = [];
+  let result = []
   for (let i = 0, len = data.length; i < len; i++) {
     if (i < dayCount) {
-      result.push('-');
-      continue;
+      result.push('-')
+      continue
     }
-    let sum = 0;
+    let sum = 0
     for (let j = 0; j < dayCount; j++) {
-      sum += data[i - j][1]; // lấy giá close
+      sum += data[i - j][1] // lấy giá close
     }
-    result.push((sum / dayCount).toFixed(2));
+    result.push((sum / dayCount).toFixed(2))
   }
-  return result;
+  return result
 }
 
+// Format số
 function formatNumber(num, decimals = 2) {
-  if (num === '-' || num == null) return '-';
+  if (num === '-' || num == null) return '-'
   return parseFloat(num)
-    .toFixed(decimals)       // làm tròn theo số thập phân
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ","); // thêm dấu phẩy ngăn cách
+    .toFixed(decimals)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
 }
 
 // Vẽ chart
 async function renderChart() {
-  const { dates, values, volumes } = await fetchData(interval.value)
+  const { dates, values, volumes } = await fetchData(interval.value, selectedCoin.value)
 
-  let ma5 = calculateMA(5, values);
-  let ma10 = calculateMA(10, values);
-  let ma20 = calculateMA(20, values);
-  let ma30 = calculateMA(30, values);
+  let ma5 = calculateMA(5, values)
+  let ma10 = calculateMA(10, values)
+  let ma20 = calculateMA(20, values)
+  let ma30 = calculateMA(30, values)
+
+  const lastClose = values[values.length - 1][1]
+  const lastOpen = values[values.length - 1][0]
 
   const option = {
     backgroundColor: "#111827",
     animation: false,
     legend: {
-      data: ["Candlestick", "MA5", "MA10", "MA20"],
-      top: 0,         // 👉 góc trên
-      left: 0,        // 👉 góc trái
+      data: ["Candlestick", "MA5", "MA10", "MA20", "MA30"],
+      top: 0,
+      left: 0,
       textStyle: { color: "#fff" },
       formatter: function (name) {
-            let lastIndex = values.length - 1;
-            if (name === 'MA5') return `MA5: ${formatNumber(ma5[lastIndex])}`;
-            if (name === 'MA10') return `MA10: ${formatNumber(ma10[lastIndex])}`;
-            if (name === 'MA20') return `MA20: ${formatNumber(ma20[lastIndex])}`;
-            if (name === 'MA30') return `MA30: ${formatNumber(ma30[lastIndex])}`;
-            return name;
-        }
+        let lastIndex = values.length - 1
+        if (name === 'MA5') return `MA5: ${formatNumber(ma5[lastIndex])}`
+        if (name === 'MA10') return `MA10: ${formatNumber(ma10[lastIndex])}`
+        if (name === 'MA20') return `MA20: ${formatNumber(ma20[lastIndex])}`
+        if (name === 'MA30') return `MA30: ${formatNumber(ma30[lastIndex])}`
+        return name
+      }
     },
-    tooltip: {
-      trigger: "axis",
-      axisPointer: { type: "cross" },
-    },
-    axisPointer: {
-      link: [{ xAxisIndex: "all" }],
-      label: { backgroundColor: "#777" },
-    },
+    tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
+    axisPointer: { link: [{ xAxisIndex: "all" }], label: { backgroundColor: "#777" } },
     grid: [
-      { left: "5%", right: "10%", height: "60%" },
-      { left: "5%", right: "5%", top: "75%", height: "15%" },
+      { left: "5%", right: "15%", height: "60%" },
+      { left: "5%", right: "15%", top: "75%", height: "15%" },
     ],
     xAxis: [
       {
@@ -233,55 +244,51 @@ async function renderChart() {
       { show: true, type: "slider", xAxisIndex: [0, 1], top: "90%", start: 80, end: 100 },
     ],
     series: [
-    {
+      {
         name: "Candlestick",
         type: "candlestick",
         data: values,
         itemStyle: {
-        color: "#26a69a",
-        color0: "#ef5350",
-        borderColor: "#26a69a",
-        borderColor0: "#ef5350",
+          color: "#26a69a",
+          color0: "#ef5350",
+          borderColor: "#26a69a",
+          borderColor0: "#ef5350",
         },
         markLine: {
-        symbol: "none",
-        label: {
+          symbol: "none",
+          label: {
             show: true,
             position: "end",
-            formatter: params => `Giá: ${params.value}`,
+            formatter: params => `Giá: ${formatNumber(params.value)}`,
             color: "#fff",
             fontWeight: "bold",
-        },
-        lineStyle: {
-            type: "dashed",
-            width: 1.5,
-        },
-        data: [
+          },
+          lineStyle: { type: "dashed", width: 1.5 },
+          data: [
             {
-            yAxis: values[values.length - 1][1],
-            lineStyle: {
-                color:
-                values[values.length - 1][1] > values[values.length - 1][0]
-                    ? "#26a69a"
-                    : "#ef5350",
+              yAxis: lastClose,
+              lineStyle: {
+                color: lastClose > lastOpen ? "#26a69a" : "#ef5350",
+              },
             },
-            },
-        ],
+          ],
         },
-    },
-    { name: "MA5", type: "line", data: calculateMA(5, values), smooth: true, lineStyle: { opacity: 0.8 } },
-    { name: "MA10", type: "line", data: calculateMA(10, values), smooth: true, lineStyle: { opacity: 0.8 } },
-    { name: "MA20", type: "line", data: calculateMA(20, values), smooth: true, lineStyle: { opacity: 0.8 } },
-    {
+      },
+      { name: "MA5", type: "line", data: ma5, smooth: true, lineStyle: { opacity: 0.8 } },
+      { name: "MA10", type: "line", data: ma10, smooth: true, lineStyle: { opacity: 0.8 } },
+      { name: "MA20", type: "line", data: ma20, smooth: true, lineStyle: { opacity: 0.8 } },
+      { name: "MA30", type: "line", data: ma30, smooth: true, lineStyle: { opacity: 0.8 } },
+      {
         name: "Volume",
         type: "bar",
         xAxisIndex: 1,
         yAxisIndex: 1,
         data: volumes,
         itemStyle: {
-        color: params => (values[params.dataIndex][1] > values[params.dataIndex][0] ? "#26a69a" : "#ef5350"),
+          color: params =>
+            values[params.dataIndex][1] > values[params.dataIndex][0] ? "#26a69a" : "#ef5350",
         },
-    },
+      },
     ]
   }
 
@@ -300,6 +307,7 @@ onMounted(() => {
   window.addEventListener("resize", () => chart.resize())
 })
 </script>
+
 
 ```
 
