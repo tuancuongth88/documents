@@ -101,6 +101,7 @@ let chart = null
 
 const selectedCoin = ref("BTCUSDT")   // mặc định BTC
 const interval = ref("1h")            // mặc định 1h
+let refreshTimer = null   // 👉 timer auto refresh
 
 // Các khung thời gian
 const timeframes = ["15m", "1h", "4h", "1d", "1w"]
@@ -281,10 +282,12 @@ onMounted(() => {
   chart = echarts.init(chartRef.value)
   renderChart()
   window.addEventListener("resize", () => chart.resize())
+   // 👉 auto refresh mỗi 5 giây
+  refreshTimer = setInterval(() => {
+    renderChart()
+  }, 5000)
 })
 </script>
-
-
 
 ```
 
