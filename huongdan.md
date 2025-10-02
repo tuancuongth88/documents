@@ -65,7 +65,7 @@ Tạo file `src/components/CandleChart.vue`:
 <template>
   <div class="p-4 bg-gray-900 text-white">
     <!-- Thanh chọn coin -->
-    <div class="p-2 bg-gray-800 text-white flex items-center space-x-2 mb-3">
+    <div class="p-2 bg-gray-800 text-white flex items-center space-x-2">
       <label>Chọn Coin:</label>
       <select v-model="selectedCoin" @change="renderChart" class="bg-gray-900 p-1 rounded">
         <option value="BTCUSDT">BTC/USDT</option>
@@ -100,7 +100,7 @@ const chartRef = ref(null)
 let chart = null
 
 const selectedCoin = ref("BTCUSDT")   // mặc định BTC
-const interval = ref("1d")            // mặc định 1d
+const interval = ref("1h")            // mặc định 1h
 
 // Các khung thời gian
 const timeframes = ["15m", "1h", "4h", "1d", "1w"]
@@ -123,8 +123,8 @@ function formatTime(ts, interval) {
   }
 }
 
-// Fetch dữ liệu từ Binance (theo coin + interval)
-async function fetchData(interval, symbol) {
+// Fetch dữ liệu từ Binance
+async function fetchData(symbol, interval) {
   const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=200`
   const res = await fetch(url)
   const raw = await res.json()
@@ -141,7 +141,6 @@ async function fetchData(interval, symbol) {
   return { dates, values, volumes }
 }
 
-// Tính MA
 function calculateMA(dayCount, data) {
   let result = []
   for (let i = 0, len = data.length; i < len; i++) {
@@ -158,7 +157,6 @@ function calculateMA(dayCount, data) {
   return result
 }
 
-// Format số
 function formatNumber(num, decimals = 2) {
   if (num === '-' || num == null) return '-'
   return parseFloat(num)
@@ -168,21 +166,18 @@ function formatNumber(num, decimals = 2) {
 
 // Vẽ chart
 async function renderChart() {
-  const { dates, values, volumes } = await fetchData(interval.value, selectedCoin.value)
+  const { dates, values, volumes } = await fetchData(selectedCoin.value, interval.value)
 
   let ma5 = calculateMA(5, values)
   let ma10 = calculateMA(10, values)
   let ma20 = calculateMA(20, values)
   let ma30 = calculateMA(30, values)
 
-  const lastClose = values[values.length - 1][1]
-  const lastOpen = values[values.length - 1][0]
-
   const option = {
     backgroundColor: "#111827",
     animation: false,
     legend: {
-      data: ["Candlestick", "MA5", "MA10", "MA20", "MA30"],
+      data: ["Candlestick", "MA5", "MA10", "MA20"],
       top: 0,
       left: 0,
       textStyle: { color: "#fff" },
@@ -198,8 +193,8 @@ async function renderChart() {
     tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
     axisPointer: { link: [{ xAxisIndex: "all" }], label: { backgroundColor: "#777" } },
     grid: [
-      { left: "5%", right: "15%", height: "60%" },
-      { left: "5%", right: "15%", top: "75%", height: "15%" },
+      { left: "5%", right: "10%", height: "60%" },
+      { left: "5%", right: "5%", top: "75%", height: "15%" },
     ],
     xAxis: [
       {
@@ -210,6 +205,10 @@ async function renderChart() {
         axisLabel: { color: "#ccc" },
         min: "dataMin",
         max: "dataMax",
+        splitLine: {                 // 👉 kẻ dọc
+            show: true,
+            lineStyle: { color: "#333" } 
+        }
       },
       {
         type: "category",
@@ -223,21 +222,8 @@ async function renderChart() {
       },
     ],
     yAxis: [
-      {
-        scale: true,
-        position: "right",
-        axisLine: { lineStyle: { color: "#aaa" } },
-        splitLine: { show: false },
-        axisLabel: { color: "#ccc" },
-      },
-      {
-        scale: true,
-        gridIndex: 1,
-        position: "right",
-        axisLine: { lineStyle: { color: "#aaa" } },
-        splitLine: { show: false },
-        axisLabel: { color: "#ccc" },
-      },
+      { scale: true, position: "right", axisLine: { lineStyle: { color: "#aaa" } }, splitLine: { show: true, lineStyle: { color: "#333"} }, axisLabel: { color: "#ccc" } },
+      { scale: true, gridIndex: 1, position: "right", axisLine: { lineStyle: { color: "#aaa" } }, splitLine: { show: false }, axisLabel: { color: "#ccc" } },
     ],
     dataZoom: [
       { type: "inside", xAxisIndex: [0, 1], start: 80, end: 100 },
@@ -256,20 +242,12 @@ async function renderChart() {
         },
         markLine: {
           symbol: "none",
-          label: {
-            show: true,
-            position: "end",
-            formatter: params => `Giá: ${formatNumber(params.value)}`,
-            color: "#fff",
-            fontWeight: "bold",
-          },
+          label: { show: true, position: "end", formatter: params => `Giá: ${params.value}`, color: "#fff", fontWeight: "bold" },
           lineStyle: { type: "dashed", width: 1.5 },
           data: [
             {
-              yAxis: lastClose,
-              lineStyle: {
-                color: lastClose > lastOpen ? "#26a69a" : "#ef5350",
-              },
+              yAxis: values[values.length - 1][1],
+              lineStyle: { color: values[values.length - 1][1] > values[values.length - 1][0] ? "#26a69a" : "#ef5350" },
             },
           ],
         },
@@ -277,7 +255,6 @@ async function renderChart() {
       { name: "MA5", type: "line", data: ma5, smooth: true, lineStyle: { opacity: 0.8 } },
       { name: "MA10", type: "line", data: ma10, smooth: true, lineStyle: { opacity: 0.8 } },
       { name: "MA20", type: "line", data: ma20, smooth: true, lineStyle: { opacity: 0.8 } },
-      { name: "MA30", type: "line", data: ma30, smooth: true, lineStyle: { opacity: 0.8 } },
       {
         name: "Volume",
         type: "bar",
@@ -285,8 +262,7 @@ async function renderChart() {
         yAxisIndex: 1,
         data: volumes,
         itemStyle: {
-          color: params =>
-            values[params.dataIndex][1] > values[params.dataIndex][0] ? "#26a69a" : "#ef5350",
+          color: params => (values[params.dataIndex][1] > values[params.dataIndex][0] ? "#26a69a" : "#ef5350"),
         },
       },
     ]
@@ -307,6 +283,7 @@ onMounted(() => {
   window.addEventListener("resize", () => chart.resize())
 })
 </script>
+
 
 
 ```
