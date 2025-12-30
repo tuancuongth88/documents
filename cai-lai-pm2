@@ -1,0 +1,121 @@
+OK, mình hướng dẫn bạn cài Node + NVM + PM2 cho user deploy từ đầu, cách sạch nhất – chạy 100% không lỗi.
+
+Bạn chỉ cần làm đúng từng bước dưới đây.
+
+🎯 MỤC TIÊU
+
+Không phụ thuộc ec2-user
+
+deploy tự chạy được:
+
+node -v
+npm -v
+pm2 ls
+
+
+pm2 chạy OK với deploy
+
+🧹 BƯỚC 0 – XÓA SẠCH CÁC THỨ CŨ (rất quan trọng)
+
+Đăng nhập root:
+
+sudo su -
+
+Xóa NVM cũ của deploy
+rm -rf /home/deploy/.nvm
+
+Xóa tất cả binary npm/node cũ trong hệ thống
+rm -f /usr/bin/node
+rm -f /usr/bin/npm
+rm -f /usr/local/bin/node
+rm -f /usr/local/bin/npm
+rm -f /usr/bin/pm2
+rm -f /usr/local/bin/pm2
+
+🧑‍💻 BƯỚC 1 – CÀI NVM CHO USER DEPLOY
+
+Login vào deploy:
+
+sudo su deploy
+
+
+Cài nvm:
+
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+
+
+Load NVM:
+
+export NVM_DIR="$HOME/.nvm"
+. "$NVM_DIR/nvm.sh"
+
+
+Kiểm tra:
+
+command -v nvm
+
+
+Nếu ra nvm → OK.
+
+📦 BƯỚC 2 – Cài Node LTS (ví dụ Node 18)
+nvm install 18
+nvm use 18
+
+
+Test:
+
+node -v
+npm -v
+
+
+phải ra version, KHÔNG còn "Permission denied".
+
+🔥 BƯỚC 3 – Cài PM2 cho deploy
+npm install -g pm2
+
+
+Test:
+
+pm2 ls
+
+♻ BƯỚC 4 – Cấu hình PM2 chạy boot (không dùng ec2-user)
+
+Chạy:
+
+pm2 startup systemd -u deploy --hp /home/deploy
+
+
+Nó sẽ hiện ra 1 lệnh dạng:
+
+sudo env PATH=$PATH:/home/deploy/.nvm/versions/node/v18.XX/bin pm2 startup systemd -u deploy --hp /home/deploy
+
+
+→ Copy lệnh đó và chạy bằng root.
+
+💾 BƯỚC 5 – Lưu PM2
+pm2 save
+
+✔ Kết thúc
+
+Giờ bạn chạy thử:
+
+sudo su deploy
+node -v
+npm -v
+pm2 ls
+
+
+Tất cả đều phải chạy OK.
+
+📌 Nếu bạn muốn mình kiểm tra lại
+
+Gửi mình output của:
+
+ls -la /home/deploy
+cat /home/deploy/.bashrc
+which node
+which npm
+which pm2
+
+
+Mình sẽ kiểm tra xem đã chuẩn chưa
