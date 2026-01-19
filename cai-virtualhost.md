@@ -95,6 +95,12 @@ Trước khi chạy Certbot, chỉnh sửa lại file example.conf và comment t
 ```bash
 sudo systemctl start httpd
 ```
+check lại xem đã vào được trang web khi không có ssl hay chưa. nếu vào dc rồi thì quay lại vào ssh chạy lệnh sau
+```bash
+sudo systemctl stop httpd
+```
+
+
 ## Bước 5: Chạy Certbot để xin SSL
 
 ```bash
