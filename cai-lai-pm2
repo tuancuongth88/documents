@@ -1,121 +1,199 @@
-OK, mình hướng dẫn bạn cài Node + NVM + PM2 cho user deploy từ đầu, cách sạch nhất – chạy 100% không lỗi.
+# Reinstall Node.js and PM2 using NVM (User: deploy)
 
-Bạn chỉ cần làm đúng từng bước dưới đây.
+This document describes how to **remove old Node.js / NPM / PM2 and
+reinstall using NVM** for the `deploy` user on Linux (EC2 / Amazon
+Linux).
 
-🎯 MỤC TIÊU
+------------------------------------------------------------------------
 
-Không phụ thuộc ec2-user
+# 1. Remove old Node.js, NPM and PM2
 
-deploy tự chạy được:
+Login to the server and switch to root.
 
-node -v
-npm -v
-pm2 ls
-
-
-pm2 chạy OK với deploy
-
-🧹 BƯỚC 0 – XÓA SẠCH CÁC THỨ CŨ (rất quan trọng)
-
-Đăng nhập root:
-
+``` bash
 sudo su -
+```
 
-Xóa NVM cũ của deploy
+Remove old NVM and Node/NPM/PM2 binaries.
+
+``` bash
 rm -rf /home/deploy/.nvm
 
-Xóa tất cả binary npm/node cũ trong hệ thống
 rm -f /usr/bin/node
 rm -f /usr/bin/npm
+
 rm -f /usr/local/bin/node
 rm -f /usr/local/bin/npm
+
 rm -f /usr/bin/pm2
 rm -f /usr/local/bin/pm2
+```
 
-🧑‍💻 BƯỚC 1 – CÀI NVM CHO USER DEPLOY
+------------------------------------------------------------------------
 
-Login vào deploy:
+# 2. Switch to deploy user
 
+``` bash
 sudo su deploy
+```
 
+------------------------------------------------------------------------
 
-Cài nvm:
+# 3. Install NVM
 
+``` bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+```
 
+Load NVM into the current shell:
 
-Load NVM:
-
+``` bash
 export NVM_DIR="$HOME/.nvm"
 . "$NVM_DIR/nvm.sh"
+```
 
+Verify NVM:
 
-Kiểm tra:
-
+``` bash
 command -v nvm
+```
 
+Expected output:
 
-Nếu ra nvm → OK.
+    nvm
 
-📦 BƯỚC 2 – Cài Node LTS (ví dụ Node 18)
-nvm install 18
-nvm use 18
+------------------------------------------------------------------------
 
+# 4. Install Node.js
 
-Test:
+Install Node.js version **20**:
 
+``` bash
+nvm install 20
+```
+
+Use the installed version:
+
+``` bash
+nvm use 20
+```
+
+Verify installation:
+
+``` bash
 node -v
 npm -v
+```
 
+------------------------------------------------------------------------
 
-phải ra version, KHÔNG còn "Permission denied".
+# 5. Install PM2
 
-🔥 BƯỚC 3 – Cài PM2 cho deploy
+Install PM2 globally:
+
+``` bash
 npm install -g pm2
+```
 
+Verify PM2:
 
-Test:
-
+``` bash
 pm2 ls
+```
 
-♻ BƯỚC 4 – Cấu hình PM2 chạy boot (không dùng ec2-user)
+If successful, PM2 will start its daemon and display an empty process
+table.
 
-Chạy:
+------------------------------------------------------------------------
 
+# 6. Configure PM2 to start on boot
+
+Run:
+
+``` bash
 pm2 startup systemd -u deploy --hp /home/deploy
+```
 
+Then execute the command suggested by PM2. Example:
 
-Nó sẽ hiện ra 1 lệnh dạng:
+``` bash
+sudo env PATH=$PATH:/home/deploy/.nvm/versions/node/v20.20.1/bin pm2 startup systemd -u deploy --hp /home/deploy
+```
 
-sudo env PATH=$PATH:/home/deploy/.nvm/versions/node/v18.XX/bin pm2 startup systemd -u deploy --hp /home/deploy
+PM2 will create the service:
 
+    /etc/systemd/system/pm2-deploy.service
 
-→ Copy lệnh đó và chạy bằng root.
+and enable it.
 
-💾 BƯỚC 5 – Lưu PM2
+------------------------------------------------------------------------
+
+# 7. Save PM2 process list
+
+After starting your applications with PM2, save them:
+
+``` bash
 pm2 save
+```
 
-✔ Kết thúc
+If no processes are running, you may see:
 
-Giờ bạn chạy thử:
+    PM2 is not managing any process
 
-sudo su deploy
-node -v
-npm -v
+------------------------------------------------------------------------
+
+# 8. Common PM2 commands
+
+List processes:
+
+``` bash
 pm2 ls
+```
 
+View logs:
 
-Tất cả đều phải chạy OK.
+``` bash
+pm2 logs
+```
 
-📌 Nếu bạn muốn mình kiểm tra lại
+Start application:
 
-Gửi mình output của:
+``` bash
+pm2 start app.js
+```
 
-ls -la /home/deploy
-cat /home/deploy/.bashrc
-which node
-which npm
-which pm2
+Restart application:
 
+``` bash
+pm2 restart app_name
+```
 
-Mình sẽ kiểm tra xem đã chuẩn chưa
+Stop application:
+
+``` bash
+pm2 stop app_name
+```
+
+Delete application:
+
+``` bash
+pm2 delete app_name
+```
+
+------------------------------------------------------------------------
+
+# 9. Check PM2 service
+
+``` bash
+systemctl status pm2-deploy
+```
+
+------------------------------------------------------------------------
+
+# Result
+
+After completing these steps:
+
+-   Node.js is managed by **NVM**
+-   PM2 runs under **deploy user**
+-   PM2 automatically starts when the **server reboots**
